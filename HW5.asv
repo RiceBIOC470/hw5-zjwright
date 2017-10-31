@@ -20,6 +20,7 @@ close all
 % whatever methods you can to try to improve it. 
 mask1=h5read('HW5_mask1.h5', '/exported_data');
 mask1=squeeze(mask1==1)'; 
+mask1=imclose(mask1, strel('disk', 3));
 figure(1)
 imshow(mask1);
 
@@ -34,6 +35,7 @@ imshow(mask1);
 % it as best you can.
 mask2=h5read('HW5_mask2.h5', '/exported_data');
 mask2=squeeze(mask2==1)'; 
+mask2=imclose(mask2, strel('disk', 5));
 figure(2)
 imshow(mask2);
 %% Problem 2. Segmentation problems.
@@ -47,6 +49,8 @@ imshow(mask2);
 %for bacteria pic:
 bacteria=imread('bacteria.tif'); 
 bacteria_imask=h5read('bacteria_imask.h5', '/exported_data'); bacteria_imask=squeeze(bacteria_imask==1)';
+bacteria_imask=imclose(bacteria_imask, strel('disk', 1));
+
 figure(3)
 imshowpair(bacteria, bacteria_imask)
 
@@ -70,18 +74,12 @@ yeast=imread('yeast.tif');
 yeast_mask=~(yeast>40);
 yeast_mask=imclearborder(yeast_mask);
 yeast_mask=imclose(yeast_mask, strel('disk', 6));
-
-CC = bwconncomp(stemcells_mask);
-stemcells_stats = regionprops(CC, 'Area');
-stemcells_area = (stemcells_stats.Area);
-s = round(1.2*sqrt(mean(stemcells_area))/pi);
-stemcells_eroded = imerode(stemcells_mask, strel('disk',s));
-stemcells_outside= ~imdilate(stemcells_mask, strel('disk',1));
-stemcells_basin = imcomplement(bwdist(stemcells_outside));
-stemcells_basin = imimposemin(stemcells_basin,stemcells_eroded|stemcells_outside);
-stemcells_eroded_ws = watershed(stemcells_basin);
-rgb=label2rgb(stemcells_eroded_ws, 'jet', [.5 .5 .5]);
-imshow(rgb, 'InitialMagnification', 'fit')
+yeast_eroded = imerode(yeast_mask, strel('disk',10));
+yeast_outside= ~imdilate(yeast_mask, strel('disk',5));
+yeast_basin = imcomplement(bwdist(yeast_outside));
+yeast_basin = imimposemin(yeast_basin,yeast_eroded|yeast_outside);
+yeast_eroded_ws = watershed(yeast_basin);
+yeast_mask=yeast_eroded_ws>1;
 figure(6)
 imshowpair(yeast, yeast_mask)
 

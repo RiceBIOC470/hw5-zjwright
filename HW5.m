@@ -20,6 +20,7 @@ close all
 % whatever methods you can to try to improve it. 
 mask1=h5read('HW5_mask1.h5', '/exported_data');
 mask1=squeeze(mask1==1)'; 
+mask1=imclose(mask1, strel('disk', 3));
 figure(1)
 imshow(mask1);
 
@@ -34,6 +35,7 @@ imshow(mask1);
 % it as best you can.
 mask2=h5read('HW5_mask2.h5', '/exported_data');
 mask2=squeeze(mask2==1)'; 
+mask2=imclose(mask2, strel('disk', 5));
 figure(2)
 imshow(mask2);
 %% Problem 2. Segmentation problems.
@@ -47,8 +49,10 @@ imshow(mask2);
 %for bacteria pic:
 bacteria=imread('bacteria.tif'); 
 bacteria_imask=h5read('bacteria_imask.h5', '/exported_data'); bacteria_imask=squeeze(bacteria_imask==1)';
+bacteria_imask=imclose(bacteria_imask, strel('disk', 1));
+bacteria_mask=imerode(bacteria_imask, strel('disk', 2));
 figure(3)
-imshowpair(bacteria, bacteria_imask)
+imshowpair(bacteria, bacteria_mask)
 
 %for worms pic:
 worms=imread('worms.tif'); 
@@ -70,7 +74,6 @@ yeast=imread('yeast.tif');
 yeast_mask=~(yeast>40);
 yeast_mask=imclearborder(yeast_mask);
 yeast_mask=imclose(yeast_mask, strel('disk', 6));
-CC = bwconncomp(yeast_mask);
 yeast_eroded = imerode(yeast_mask, strel('disk',10));
 yeast_outside= ~imdilate(yeast_mask, strel('disk',5));
 yeast_basin = imcomplement(bwdist(yeast_outside));
