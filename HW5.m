@@ -1,4 +1,6 @@
 %HW5
+clear all
+close all
 
 % Note. You can use the code readIlastikFile.m provided in the repository to read the output from
 % ilastik into MATLAB.
@@ -8,18 +10,32 @@
 % Part 1. Use Ilastik to perform a segmentation of the image stemcells.tif
 % in this folder. Be conservative about what you call background - i.e.
 % don't mark something as background unless you are sure it is background.
-% Output your mask into your repository. What is the main problem with your segmentation?  
+% Output your mask into your repository. What is the main problem with your
+% segmentation?  
+
+%Too many nuclei are connected. Trying to separate more causes you to lose
+%lots of the dimmer ones.
 
 % Part 2. Read you segmentation mask from Part 1 into MATLAB and use
 % whatever methods you can to try to improve it. 
+mask1=h5read('HW5_mask1.h5', '/exported_data');
+mask1=squeeze(mask1==1)'; 
+figure(1)
+imshow(mask1);
 
 % Part 3. Redo part 1 but now be more aggresive in defining the background.
 % Try your best to use ilastik to separate cells that are touching. Output
 % the resulting mask into the repository. What is the problem now?
 
+%Now the dimmer nuclei are ether cut out of the mask or only some of the brighter
+%pixels in those nuclei are included in the mask.
+
 % Part 4. Read your mask from Part 3 into MATLAB and try to improve
 % it as best you can.
-
+mask2=h5read('HW5_mask2.h5', '/exported_data');
+mask2=squeeze(mask2==1)'; 
+figure(2)
+imshow(mask2);
 %% Problem 2. Segmentation problems.
 
 % The folder segmentationData has 4 very different images. Use
@@ -28,3 +44,39 @@
 % step put the output from ilastik in your repository as well as an .h5
 % file. Put code here that will allow for viewing of each image together
 % with your final segmentation. 
+%for bacteria pic:
+bacteria=imread('bacteria.tif'); 
+bacteria_imask=h5read('bacteria_imask.h5', '/exported_data'); bacteria_imask=squeeze(bacteria_imask==1)';
+figure(3)
+imshowpair(bacteria, bacteria_imask)
+
+%for worms pic:
+worms=imread('worms.tif'); 
+worms_mask=~(worms>1190);
+worms_mask=imclearborder(worms_mask);
+worms_mask=imclose(worms_mask, strel('disk', 4));
+imshowpair(worms, worms_mask)
+
+%for phase contrast pic:
+phase=imread('cellPhaseContrast.png');
+phase_mask=(~(phase>120));
+phase_mask=imclose(phase_mask, strel('disk', 4));
+phase_mask=imfill(phase_mask, 'holes');
+figure(5)
+imshowpair(phase, phase_mask)
+
+%for yeast pic:
+yeast=imread('yeast.tif');
+yeast_mask=~(yeast>40);
+yeast_mask=imclearborder(yeast_mask);
+yeast_mask=imclose(yeast_mask, strel('disk', 6));
+CC = bwconncomp(yeast_mask);
+yeast_eroded = imerode(yeast_mask, strel('disk',10));
+yeast_outside= ~imdilate(yeast_mask, strel('disk',5));
+yeast_basin = imcomplement(bwdist(yeast_outside));
+yeast_basin = imimposemin(yeast_basin,yeast_eroded|yeast_outside);
+yeast_eroded_ws = watershed(yeast_basin);
+yeast_mask=yeast_eroded_ws>1;
+figure(6)
+imshowpair(yeast, yeast_mask)
+
